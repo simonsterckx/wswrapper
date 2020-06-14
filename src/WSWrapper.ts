@@ -8,7 +8,7 @@ export interface WSWrapperOptions {
   onerror?: (e: Event) => void;
   onreconnect?: (e: Event) => void;
   timeout?: number;
-  onmaximum?: any;
+  onmaximum?: (e: Event) => void;
 }
 
 export default class WSWrapper {
