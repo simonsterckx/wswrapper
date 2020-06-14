@@ -1,0 +1,6 @@
+{
+  "name": "wswrapper",
+  "version": "0.1.0",
+  "main": "src/WSWrapper.ts",
+  "license": "MIT"
+}
