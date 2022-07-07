@@ -12,8 +12,8 @@ export interface WSWrapperOptions {
 }
 
 export default class WSWrapper {
-  websocket: WebSocket;
-  options: WSWrapperOptions;
+  websocket!: WebSocket;
+  options: Required<WSWrapperOptions>;
   url: string;
   attemptedReconnects = 0;
   timerId = -1;
@@ -24,12 +24,17 @@ export default class WSWrapper {
       maxAttempts: Infinity,
       protocols: [],
       timeout: 1000,
+      onopen: () => {},
+      onclose: () => {},
+      onerror: () => {},
+      onreconnect: () => {},
+      onmaximum: () => {},
       ...options,
     };
 
     this.open();
   }
-  open() {
+  public open() {
     const ws = new WebSocket(this.url, this.options.protocols);
     this.websocket = ws;
 
@@ -37,7 +42,7 @@ export default class WSWrapper {
     ws.onmessage = this.options.onmessage;
 
     ws.onopen = (evt) => {
-      this.options.onopen?.(evt);
+      this.options.onopen(evt);
       this.attemptedReconnects = 0;
     };
     ws.onclose = (evt) => {
@@ -46,30 +51,33 @@ export default class WSWrapper {
         evt.code === 1001 ||
         evt.code === 1005 ||
         this.reconnect(evt);
-      this.options.onclose?.(evt);
+      this.options.onclose(evt);
     };
 
     ws.onerror = (evt) => {
-      this.options.onerror?.(evt);
+      this.options.onerror(evt);
     };
   }
-  reconnect(evt: Event) {
+  private reconnect(evt: Event) {
     if (this.timerId && this.attemptedReconnects++ < this.options.maxAttempts) {
       const timeoutFn = () => {
-        this.options.onreconnect?.(evt);
+        this.options.onreconnect(evt);
         this.open();
       };
-      this.timerId = setTimeout(timeoutFn, this.options.timeout);
+      this.timerId = setTimeout(
+        timeoutFn,
+        this.options.timeout
+      ) as unknown as number;
     } else {
-      this.options.onmaximum?.(evt);
+      this.options.onmaximum(evt);
     }
   }
 
-  send(message: string | ArrayBuffer | Blob | ArrayBufferView) {
+  public send(message: string | ArrayBuffer | Blob | ArrayBufferView) {
     this.websocket.send(message);
   }
 
-  close(code?: number, reason?: string) {
+  public close(code?: number, reason?: string) {
     clearTimeout(this.timerId);
     this.timerId = -1;
     this.websocket.close(code || 1000, reason);
