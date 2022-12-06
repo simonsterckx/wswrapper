@@ -1,8 +1,10 @@
 export interface WSWrapperOptions {
+  onmessage: (e: MessageEvent) => void;
+
+  autostart?: boolean;
   maxAttempts?: number;
   protocols?: string | string[];
   binaryType?: BinaryType;
-  onmessage: (e: MessageEvent) => void;
   onopen?: (e: Event) => void;
   onclose?: (e: CloseEvent) => void;
   onerror?: (e: Event) => void;
@@ -11,7 +13,20 @@ export interface WSWrapperOptions {
   onmaximum?: (e: Event) => void;
 }
 
-export default class WSWrapper {
+const defaultOptions = {
+  binaryType: "blob",
+  maxAttempts: Infinity,
+  protocols: [] as string[],
+  timeout: 1000,
+  autostart: false,
+  onopen: () => {},
+  onclose: () => {},
+  onerror: () => {},
+  onreconnect: () => {},
+  onmaximum: () => {},
+} as const;
+
+export class WSWrapper {
   websocket!: WebSocket;
   options: Required<WSWrapperOptions>;
   url: string;
@@ -20,19 +35,13 @@ export default class WSWrapper {
   constructor(url: string, options: WSWrapperOptions) {
     this.url = url;
     this.options = {
-      binaryType: "blob",
-      maxAttempts: Infinity,
-      protocols: [],
-      timeout: 1000,
-      onopen: () => {},
-      onclose: () => {},
-      onerror: () => {},
-      onreconnect: () => {},
-      onmaximum: () => {},
+      ...defaultOptions,
       ...options,
     };
 
-    this.open();
+    if (this.options.autostart) {
+      this.open();
+    }
   }
   public open() {
     const ws = new WebSocket(this.url, this.options.protocols);
